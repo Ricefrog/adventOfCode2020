@@ -1,0 +1,89 @@
+#! /usr/bin/python
+
+inFile = open('input.txt')
+
+def notBeginning(desc, line):
+	words = line.split()
+	otherDesc = words[0] + ' ' + words[1] + ' ' + words[2]
+	if otherDesc == desc:
+		return False
+	else:
+		return True
+
+direct = []
+indirect = []
+lines = inFile.readlines()
+total = 2
+for line in lines:
+	if 'shiny gold bag' in line or 'shiny gold bags' in line:
+		direct.append(line)
+print(len(direct))
+for line in direct:
+	print(line)
+
+for line in lines:
+	if line in direct:
+		lines.remove(line)
+
+for line in lines:
+	if 'dim tan bag' in line:
+		indirect.append(line)
+	elif 'posh beige bag' in line:
+		indirect.append(line)
+total += len(indirect)
+print(len(indirect))
+for line in indirect:
+	print(line)
+
+for line in lines:
+	if line in indirect:
+		lines.remove(line)
+
+adj = []
+for line in indirect:
+	words = line.split()
+	adj.append(words[0] + ' ' + words[1] + ' ' + words[2][:-1])
+
+indirect_2 = []
+for line in lines:
+	for desc in adj:
+		if desc in line:
+			indirect_2.append(line)
+total += len(indirect_2)
+print(len(indirect_2))
+print(adj)
+for line in lines:
+	if line in indirect_2:
+			lines.remove(line)
+
+adj = []
+for line in indirect_2:
+	words = line.split()
+	adj.append(words[0] + ' ' + words[1] + ' ' + words[2])
+indirect_3 = []
+for line in lines:
+	for desc in adj:
+		if desc in line:
+			indirect_3.append(line)
+print(len(indirect_3))
+print(adj)
+for line in lines:
+	if line in indirect_3:
+		lines.remove(line)
+
+adj = []
+for line in indirect_3:
+	words = line.split()
+	adj.append(words[0] + ' ' + words[1] + ' ' + words[2])
+indirect_4 = []
+for line in lines:
+	for desc in adj:
+		if desc in line:
+			indirect_4.append(line)
+'''
+for line in indirect_4:
+	print(line)
+'''
+print(len(indirect_4))
+
+print(len(lines))
