@@ -29,27 +29,35 @@ def findFactors(ID_dict):
 		offsets.append(val)
 		reverseID_dict[val] = int(key)
 	offsets.sort()
-	factor = reverseID_dict[offsets[0]]
-	offsets = offsets[1:]
-	print()
 	print(offsets)
 	print(reverseID_dict)
-	print('first factor: %d' % factor)
+	factor = 1
 
 	for offset in offsets:
+		print()
 		print('offset: %d' % offset)
 		y = 1
-		curMultiple = reverseID_dict[offset] * factor
+		curMultiple = reverseID_dict[offset] 
 		print('curMultiple = %d' % curMultiple)
-		while (reverseID_dict[offset] * y) % curMultiple != offset:
+		while (curMultiple * y) % factor != offset:
 			y += 1
-		factor = curMultiple
-		print('factor is now %d' % factor)
+		factor = lcm(curMultiple * y, factor)
+		print('factor is now %d with y: %d' % (factor, y))
 		
 	return factor
 
+def lcm(x, y):
+	if x > y:
+		greater = x
+	else:
+		greater = y
 
-		
+	while True:
+		if ((greater % x == 0) and (greater % y == 0)):
+			lcm = greater
+			break
+		greater += 1
+	return lcm
 
 def gcd(x, y):
 	mults = x // y
@@ -69,13 +77,23 @@ def meetsSubs(timestamp, ID_dict, mainMod):
 
 
 def subsequents(IDs):
+	realIDs = []
 	ID_dict = {}
+	lcm = 1
+	time = 0
+	realInd = 0
 	for i in range(len(IDs)):
 		if IDs[i] != 'x':
 			print('Bus ID %s departs %d minutes after t.' % (IDs[i], i))
 			ID_dict[IDs[i]] = i
-	mainMod = findFactors(ID_dict)
-	print(mainMod)
+			realIDs.append(int(IDs[i]))
+			realInd += 1
+			if i > 0:
+				lcm *= int(realIDs[realInd - 2])
+				print('lcm: %d' % lcm)
+				while (time + i) % int(realIDs[realInd - 1]) != 0:
+					time += lcm
+	print(time)
 	return
 	y = 1
 	timestamp = mainMod * y
@@ -86,7 +104,7 @@ def subsequents(IDs):
 		timestamp = mainMod * y
 	return timestamp
 	
-inFile = open('input2.txt')
+inFile = open('input.txt')
 
 temp = inFile.read().split('\n')
 departTime = int(temp[0])
