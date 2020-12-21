@@ -1,6 +1,7 @@
 #! /usr/bin/python
 
 import itertools
+from copy import deepcopy
 
 def printTile(rows):
 	for row in rows:
@@ -118,32 +119,36 @@ class tileObject:
 		self.botEdge = getEdge('bot', self.rows)
 		self.leftEdge = getEdge('left', self.rows)
 
-		self.topTile = 'none'
+		self.topTile = ['none']
 		for otherTile, otherRows in tileDict.items():
 			if otherTile != tileNumber:
 				if checkMatches(self.topEdge, otherRows, otherTile):
-					self.topTile = otherTile
+					self.topTile.remove('none')
+					self.topTile.append(otherTile)
 					break
 
-		self.rightTile = 'none'
+		self.rightTile = ['none']
 		for otherTile, otherRows in tileDict.items():
 			if otherTile != tileNumber:
 				if checkMatches(self.rightEdge, otherRows, otherTile):
-					self.rightTile = otherTile
+					self.rightTile.remove('none')
+					self.rightTile.append(otherTile)
 					break
 
-		self.botTile = 'none'
+		self.botTile = ['none']
 		for otherTile, otherRows in tileDict.items():
 			if otherTile != tileNumber:
 				if checkMatches(self.botEdge, otherRows, otherTile):
-					self.botTile = otherTile
+					self.botTile.remove('none')
+					self.botTile.append(otherTile)
 					break
 
-		self.leftTile = 'none'
+		self.leftTile = ['none']
 		for otherTile, otherRows in tileDict.items():
 			if otherTile != tileNumber:
 				if checkMatches(self.leftEdge, otherRows, otherTile):
-					self.leftTile = otherTile
+					self.leftTile.remove('none')
+					self.leftTile.append(otherTile)
 					break
 
 	def rotateRight(self):
@@ -172,7 +177,12 @@ class tileObject:
 		self.botEdge = getEdge('bot', self.rows)
 		self.leftEdge = getEdge('left', self.rows)
 		self.topTile, self.botTile = self.botTile, self.topTile
-			
+
+	def trimTile(self):
+		trimmedRows = []
+		for i in range(1, len(self.rows) - 1):
+			trimmedRows.append(self.rows[i][1:-1])
+		self.rows = trimmedRows
 
 	def printTile(self):
 		print()
@@ -212,7 +222,7 @@ def createGrid(tileObjects, tileDict, size):
 	print(grid)
 	# find top left tile
 	for tile in tileObjects:
-		if tile.topTile == 'none' and tile.leftTile == 'none':
+		if tile.topTile[0] == 'none' and tile.leftTile[0] == 'none':
 			topLeftTileNumber = tile.tileNumber
 	print('topLeftTileNumber:', topLeftTileNumber)
 	grid[0].append(topLeftTileNumber)
@@ -223,38 +233,54 @@ def createGrid(tileObjects, tileDict, size):
 				if tileObject.tileNumber == currentTileNumber:
 					currentTileObject = tileObject
 					break
-			if currentTileObject.rightTile == 'none':
+			if currentTileObject.rightTile == ['none']:
 				# this is the last tile in the row
+				print('tile %d is the last in the row. j: %d' % (currentTileNumber, j))
+				currentTileObject.printConnectingTiles()
 				#grid[i].append(currentTileNumber)
 				break
-			for tileObject in tileObjects:
-				if tileObject.tileNumber == currentTileObject.rightTile:
-					rightTileObject = tileObject
-					break
+			for rightTileNumber in currentTileObject.rightTile:
+				for tileObject in tileObjects:
+					if tileObject.tileNumber == rightTileNumber:
+						rightTileObject = tileObject
+						break
 
-			for k in range(3):
-				if i == 0:
-					topEdge = rightTileObject.topEdge
-				else: 
-					aboveTileNumber = grid[i - 1][j + 1]
-					for tileObject in tileObjects:
-						if tileObject.tileNumber == aboveTileNumber:
-							topEdge = tileObject.botEdge
+				for k in range(3):
+					if i == 0:
+						if currentTileObject.rightEdge == rightTileObject.leftEdge and rightTileObject.topTile == ['none']:
+							break
 
-				if currentTileObject.rightEdge == rightTileObject.leftEdge and rightTileObject.topEdge == topEdge:
-					break
+						rightTileObject.flipHorizontal()
+						if currentTileObject.rightEdge == rightTileObject.leftEdge and rightTileObject.topTile == ['none']:
+							break
+						rightTileObject.flipHorizontal()
 
-				rightTileObject.flipHorizontal()
-				if currentTileObject.rightEdge == rightTileObject.leftEdge and rightTileObject.topEdge == topEdge:
-					break
-				rightTileObject.flipHorizontal()
+						rightTileObject.flipVertical()
+						if currentTileObject.rightEdge == rightTileObject.leftEdge and rightTileObject.topTile == ['none']:
+							break
+						rightTileObject.flipVertical()
 
-				rightTileObject.flipVertical()
-				if currentTileObject.rightEdge == rightTileObject.leftEdge and rightTileObject.topEdge == topEdge:
-					break
-				rightTileObject.flipVertical()
+						rightTileObject.rotateRight()
+					else: 
+						aboveTileNumber = grid[i - 1][j + 1]
+						for tileObject in tileObjects:
+							if tileObject.tileNumber == aboveTileNumber:
+								topEdge = tileObject.botEdge
 
-				rightTileObject.rotateRight()
+						if currentTileObject.rightEdge == rightTileObject.leftEdge and rightTileObject.topEdge == topEdge:
+							break
+
+						rightTileObject.flipHorizontal()
+						if currentTileObject.rightEdge == rightTileObject.leftEdge and rightTileObject.topEdge == topEdge:
+							break
+						rightTileObject.flipHorizontal()
+
+						rightTileObject.flipVertical()
+						if currentTileObject.rightEdge == rightTileObject.leftEdge and rightTileObject.topEdge == topEdge:
+							break
+						rightTileObject.flipVertical()
+
+						rightTileObject.rotateRight()
 
 			grid[i].append(rightTileObject.tileNumber)
 			currentTileNumber = rightTileObject.tileNumber
@@ -265,31 +291,162 @@ def createGrid(tileObjects, tileDict, size):
 			if tileObject.tileNumber == currentTileNumber:
 				currentTileObject = tileObject
 				break
-		if currentTileObject.botTile == 'none':
+		if currentTileObject.botTile == ['none']:
 			break
-		for tileObject in tileObjects:
-			if tileObject.tileNumber == currentTileObject.botTile:
-				botTileObject = tileObject
-				break
-		for k in range(3):
-			if currentTileObject.botEdge == botTileObject.topEdge and botTileObject.leftTile == 'none':
-				break
+		for botTileNumber in currentTileObject.botTile:
+			for tileObject in tileObjects:
+				if tileObject.tileNumber == botTileNumber:
+					botTileObject = tileObject
+					break
+			for k in range(3):
+				if currentTileObject.botEdge == botTileObject.topEdge and botTileObject.leftTile == ['none']:
+					break
 
-			botTileObject.flipHorizontal()
-			if currentTileObject.botEdge == botTileObject.topEdge and botTileObject.leftTile == 'none':
-				break
-			botTileObject.flipHorizontal()
+				botTileObject.flipHorizontal()
+				if currentTileObject.botEdge == botTileObject.topEdge and botTileObject.leftTile == ['none']:
+					break
+				botTileObject.flipHorizontal()
 
-			botTileObject.flipVertical()
-			if currentTileObject.botEdge == botTileObject.topEdge and botTileObject.leftTile == 'none':
-				break
-			botTileObject.flipVertical()
+				botTileObject.flipVertical()
+				if currentTileObject.botEdge == botTileObject.topEdge and botTileObject.leftTile == ['none']:
+					break
+				botTileObject.flipVertical()
 
-			botTileObject.rotateRight()
+				botTileObject.rotateRight()
 		grid[i + 1].append(botTileObject.tileNumber)
 		currentTileNumber = botTileObject.tileNumber
 		printGrid(grid, size, tileObjects)
 	return grid
+
+def constructSeaMap(grid, tileObjects):
+	for tileObject in tileObjects:
+		tileObject.trimTile()
+
+	seaMap = []
+	for i in range(len(grid[0])):
+		for k in range(8):
+			currentRow = ''
+			for j in range(len(grid[0])):
+				currentTileNumber = grid[i][j]
+				for tileObject in tileObjects:
+					if currentTileNumber == tileObject.tileNumber:
+						currentTileObject = tileObject
+						break
+				currentRow += currentTileObject.rows[k]
+			seaMap.append(currentRow)
+			'''
+			print()
+			print('i: %d, j: %d, k: %d' % (i, j, k))
+			print(seaMap)
+			'''
+	return seaMap
+
+def findSeaMonsters(seaMap):
+	size = len(seaMap.rows[0])
+	seaMonster = ['                  # ', '#    ##    ##    ###', ' #  #  #  #  #  #   ']
+	seaMonsterIndices = {}
+	for j in range(len(seaMonster)):
+		indices = []
+		for i in range(len(seaMonster[j])):
+			if seaMonster[j][i] == '#':
+				indices.append(i)
+		seaMonsterIndices[j] = indices
+	correctMaps = []
+	maxCount = 0
+	for perm in range(3):
+		count = 0
+		seaMapCopy = deepcopy(seaMap)
+		for i in range(size - 3):
+			for j in range(size - len(seaMonster[0])):
+				checkRows = []
+				for k in range(i, i + 3):
+					checkRows.append(seaMapCopy.rows[k][j:j + len(seaMonster[0])])
+				match = True
+				for k in range(3):
+					currentRow = checkRows[k]
+					currentIndices = seaMonsterIndices[k]
+					for ind in currentIndices:
+						if currentRow[ind] != '#':
+							match = False
+						else:
+							currentRow = checkRows[k] = currentRow[:ind] + 'X' + currentRow[ind + 1:]
+				if match == True:
+					for k in range(3):
+						seaMapCopy.rows[k + i] = seaMapCopy.rows[k + i][:j] + checkRows[k] + seaMapCopy.rows[k + i][j + len(seaMonster[0]):]
+					print('checkRows:', checkRows)
+					print('seaMonster:', seaMonster)
+					count += 1
+		if count > maxCount:
+			correctMaps.append(seaMapCopy)
+			maxCount = count
+
+		seaMap.flipHorizontal()
+		seaMapCopy = deepcopy(seaMap)
+		count = 0
+		for i in range(size - 3):
+			for j in range(size - len(seaMonster[0])):
+				checkRows = []
+				for k in range(i, i + 3):
+					checkRows.append(seaMapCopy.rows[k][j:j + len(seaMonster[0])])
+				match = True
+				for k in range(3):
+					currentRow = checkRows[k]
+					currentIndices = seaMonsterIndices[k]
+					for ind in currentIndices:
+						if currentRow[ind] != '#':
+							match = False
+						else:
+							currentRow = checkRows[k] = currentRow[:ind] + 'X' + currentRow[ind + 1:]
+				if match == True:
+					for k in range(3):
+						seaMapCopy.rows[k + i] = seaMapCopy.rows[k + i][:j] + checkRows[k] + seaMapCopy.rows[k + i][j + len(seaMonster[0]):]
+					print('checkRows:', checkRows)
+					print('seaMonster:', seaMonster)
+					count += 1
+		if count > maxCount:
+			correctMaps.append(seaMapCopy)
+			maxCount = count
+		seaMap.flipHorizontal()
+
+		seaMap.flipVertical()
+		seaMapCopy = deepcopy(seaMap)
+		count = 0
+		for i in range(size - 3):
+			for j in range(size - len(seaMonster[0])):
+				checkRows = []
+				for k in range(i, i + 3):
+					checkRows.append(seaMapCopy.rows[k][j:j + len(seaMonster[0])])
+				match = True
+				for k in range(3):
+					currentRow = checkRows[k]
+					currentIndices = seaMonsterIndices[k]
+					for ind in currentIndices:
+						if currentRow[ind] != '#':
+							match = False
+						else:
+							currentRow = checkRows[k] = currentRow[:ind] + 'X' + currentRow[ind + 1:]
+				if match == True:
+					for k in range(3):
+						seaMapCopy.rows[k + i] = seaMapCopy.rows[k + i][:j] + checkRows[k] + seaMapCopy.rows[k + i][j + len(seaMonster[0]):]
+					print('checkRows:', checkRows)
+					print('seaMonster:', seaMonster)
+					count += 1
+		if count > maxCount:
+			correctMaps.append(seaMapCopy)
+			maxCount = count
+		seaMap.flipVertical()
+
+		seaMap.rotateRight()
+	print('number of correct maps:', len(correctMaps))
+	for m in correctMaps:
+		roughness = 0
+		m.printTile()
+		for row in m.rows:
+			for ch in row:
+				if ch == '#':
+					roughness += 1
+		return roughness
+	
 
 inFile = open('input.txt')
 
@@ -315,26 +472,14 @@ tileObjects = [tileObject(tileNumber, tiles) for tileNumber in tiles.keys()]
 for t in tileObjects:
 	t.printConnectingTiles()
 	print()
-
 '''
 tileObjects[0].printTile()
 tileObjects[0].printConnectingTiles()
-tileObjects[0].flipVertical()
+tileObjects[0].trimTile()
 tileObjects[0].printTile()
 tileObjects[0].printConnectingTiles()
 '''
-
 grid = createGrid(tileObjects, tiles, squareSize)
-'''
-print([tileObject.tileNumber for tileObject in tileObjects])
-for tileObject in tileObjects:
-	if tileObject.tileNumber == 1171 or tileObject.tileNumber == 2791:
-		tileObject.printTile()
-		print(tileObject.rows)
-'''
-
-'''
-cornerPieces = {}
-print(findMatches(tiles, cornerPieces)) # part 1 answer
-print(cornerPieces)
-'''
+tiles[420] = constructSeaMap(grid, tileObjects)
+seaMap = tileObject(420, tiles)
+print(findSeaMonsters(seaMap))
